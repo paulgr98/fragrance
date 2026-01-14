@@ -1,6 +1,19 @@
 import { Perfume, Brand, Note, PerfumeNotes } from '../models/models.js';
 import { Op, fn, col, where } from 'sequelize';
 
+function flattenPerfumes(perfumes) {
+    return perfumes.map(perfume => {
+        return {
+            ...perfume.toJSON(),
+            Notes: perfume.Notes.map(note => ({
+                id: note.id,
+                name: note.name,
+                noteType: note.PerfumeNotes.noteType
+            }))
+        };
+    });
+}
+
 export async function getPerfumes(req, res) {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -46,16 +59,7 @@ export async function getPerfumes(req, res) {
             subQuery: false
         });
 
-        const simplifiedPerfumes = perfumes.map(perfume => {
-            return {
-                ...perfume.toJSON(),
-                Notes: perfume.Notes.map(note => ({
-                    id: note.id,
-                    name: note.name,
-                    noteType: note.PerfumeNotes.noteType
-                }))
-            };
-        });
+        const simplifiedPerfumes = flattenPerfumes(perfumes);
 
         res.status(200).json({
             perfumes: simplifiedPerfumes,
@@ -71,11 +75,25 @@ export async function getPerfumes(req, res) {
 
 export async function getPerfumeById(req, res) {
     try {
-        const perfume = await Perfume.findByPk(req.params.id);
+        const perfume = await Perfume.findByPk(req.params.id, {
+            include: [
+                {
+                    model: Brand,
+                },
+                {
+                    model: Note,
+                    through: {
+                        model: PerfumeNotes,
+                        attributes: ['noteType']
+                    },
+                    required: false
+                }
+            ]
+        });
         if (!perfume) {
             return res.status(404).json({ message: 'Perfume not found.' });
         }
-        res.status(200).json(perfume);
+        res.status(200).json(flattenPerfumes([perfume])[0]);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -83,7 +101,6 @@ export async function getPerfumeById(req, res) {
 
 export async function getPerfumeByName(req, res) {
     try {
-
         const q = req.params.name;
 
         const results = await Perfume.findAll({
@@ -96,11 +113,23 @@ export async function getPerfumeByName(req, res) {
                     )
                 ]
             },
-            limit: 10
+            limit: 10,
+            include: [
+                {
+                    model: Brand,
+                },
+                {
+                    model: Note,
+                    through: {
+                        model: PerfumeNotes,
+                        attributes: ['noteType']
+                    },
+                    required: false
+                }
+            ]
         });
 
-        res.status(200).json(results);
-
+        res.status(200).json(flattenPerfumes(results));
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

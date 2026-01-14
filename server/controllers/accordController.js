@@ -1,4 +1,5 @@
 import Accord from '../models/Accord.js';
+import { Op, fn, col, where } from 'sequelize';
 
 export async function getAllAccords(req, res) {
     try {
@@ -49,6 +50,31 @@ export async function getAccordById(req, res) {
             return res.status(404).json({ message: 'Accord not found.' });
         }
         res.status(200).json(accord);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+export async function getAccordByName(req, res) {
+    try {
+
+        const q = req.params.name;
+
+        const results = await Accord.findAll({
+            where: {
+                [Op.or]: [
+                    { name: { [Op.like]: `%${q}%` } },
+                    where(
+                        fn("SOUNDEX", col("name")),
+                        fn("SOUNDEX", q)
+                    )
+                ]
+            },
+            limit: 10
+        });
+
+        res.status(200).json(results);
+
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
