@@ -26,12 +26,15 @@ Accord.belongsToMany(Perfume, {
 
 Perfume.belongsToMany(Note, {
     through: PerfumeNotes,
-    foreignKey: "perfume_id",
+    foreignKey: "perfumeId",
+    otherKey: "noteId"
 });
+
 
 Note.belongsToMany(Perfume, {
     through: PerfumeNotes,
-    foreignKey: "note_id",
+    foreignKey: "noteId",
+    otherKey: "perfumeId"
 });
 
 export {

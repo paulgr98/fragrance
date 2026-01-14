@@ -1,4 +1,4 @@
-import { Perfume, Brand, Note } from '../models/models.js';
+import { Perfume, Brand, Note, PerfumeNotes } from '../models/models.js';
 import { Op, fn, col, where } from 'sequelize';
 
 export async function getPerfumes(req, res) {
@@ -28,30 +28,41 @@ export async function getPerfumes(req, res) {
             where: where,
             limit: limit,
             offset: offset,
-            order: orderArray
+            order: orderArray,
+            include: [
+                {
+                    model: Brand,
+                },
+                {
+                    model: Note,
+                    through: {
+                        model: PerfumeNotes,
+                        attributes: ['noteType']
+                    },
+                    required: false
+                }
+            ],
+            distinct: true,
+            subQuery: false
         });
 
-        //TODO: fix include
+        const simplifiedPerfumes = perfumes.map(perfume => {
+            return {
+                ...perfume.toJSON(),
+                Notes: perfume.Notes.map(note => ({
+                    id: note.id,
+                    name: note.name,
+                    noteType: note.PerfumeNotes.noteType
+                }))
+            };
+        });
+
         res.status(200).json({
-            perfumes,
+            perfumes: simplifiedPerfumes,
             totalPerfumes,
             totalPages: Math.ceil(totalPerfumes / limit),
             currentPage: page,
             orderBy: orderArray,
-            include: [
-                {
-                    model: Brand,
-                    attributes: ['id', 'name'],
-                    through: { attributes: [] }
-                },
-                {
-                    model: Note,
-                    attributes: ['id', 'name'],
-                    through: { attributes: ['type'] }
-
-                }
-            ],
-            distinct: true
         });
     } catch (error) {
         res.status(500).json({ message: error.message });

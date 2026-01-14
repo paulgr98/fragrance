@@ -4,23 +4,31 @@ import sequalize from '../config/sequelize.js';
 const PerfumeNotes = sequalize.define(
     'PerfumeNotes',
     {
-        id: {
+        perfumeId: {
             type: DataTypes.INTEGER,
-            primaryKey: true,
-            autoIncrement: true
+            allowNull: false,
+            references: {
+                model: 'perfumes',
+                key: 'id'
+            }
         },
-        name: {
-            type: DataTypes.STRING,
-            allowNull: false
+        noteId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            references: {
+                model: 'notes',
+                key: 'id'
+            }
         },
-        type: {
+        noteType: {
             type: DataTypes.ENUM('top', 'middle', 'base'),
             allowNull: false
         }
     },
     {
         tableName: 'perfume_notes',
-        timestamps: false
+        timestamps: false,
+        underscored: true
     }
 );
 
