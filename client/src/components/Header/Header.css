@@ -1,0 +1,12 @@
+.navbar-brand {
+    margin-left: 4vw;
+}
+
+.navbar-custom-bg {
+    background-color: #2a2a2a;
+    color: whitesmoke;
+}
+
+.navbar-toggler {
+    order: -1;
+}
